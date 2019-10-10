@@ -3,42 +3,44 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Contracts\Auth\Factory as Auth;
+use Exception;
+use App\User;
+use Firebase\JWT\JWT;
+use Firebase\JWT\ExpiredException;
 
 class Authenticate
 {
-    /**
-     * The authentication guard factory instance.
-     *
-     * @var \Illuminate\Contracts\Auth\Factory
-     */
-    protected $auth;
-
-    /**
-     * Create a new middleware instance.
-     *
-     * @param  \Illuminate\Contracts\Auth\Factory  $auth
-     * @return void
-     */
-    public function __construct(Auth $auth)
-    {
-        $this->auth = $auth;
-    }
-
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string|null  $guard
-     * @return mixed
-     */
     public function handle($request, Closure $next, $guard = null)
     {
-        if ($this->auth->guard($guard)->guest()) {
-            return response('Unauthorized.', 401);
+        $token = explode(' ', $request->header('Authorization'));
+        
+        if(!$request->header('Authorization')) {
+            // Unauthorized response if token not there
+            return response()->json([
+                'error' => [
+                    'message' => 'Tidak mememiliki akses login'
+                ]
+            ], 401);
         }
 
+        try {
+            $credentials = JWT::decode($token[1], env('JWT_SECRET'), ['HS256']);
+        } catch(ExpiredException $e) {
+            return response()->json([
+                'error' => [
+                    'message' => 'Sesi login sudah kadaluarsa. Silakan login kembali.'
+                ]
+            ], 400);
+        } catch(Exception $e) {
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], 400);
+        }
+        $user = User::find($credentials->sub);
+        // Now let's put the user in the request class so that you can grab it from there
+        $request->auth = $user;
         return $next($request);
     }
 }
