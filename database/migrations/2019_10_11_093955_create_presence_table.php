@@ -16,6 +16,7 @@ class CreatePresenceTable extends Migration
         Schema::create('presence', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
+            $table->decimal('point', 2, 1);
             $table->timestamps();
             $table->foreign('user_id')
                   ->references('id')
