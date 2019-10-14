@@ -47,7 +47,7 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'roles' => $roleName
             ];
-            $exp = time() + env('JWT_EXP');
+            $exp = env('JWT_EXP');
             return response()->json([
                 'token' => JwtHelper::generateToken($payload, $user->username, $exp),
                 'expires_in' => $exp
