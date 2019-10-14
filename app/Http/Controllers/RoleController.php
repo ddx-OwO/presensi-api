@@ -51,6 +51,10 @@ class RoleController extends Controller
     public function show($name)
     {
         $role = Role::where('name', $name)->first();
+        if (! $role) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException;
+        }
+
         RoleResource::withoutWrapping();
         return new RoleResource($role);
     }
