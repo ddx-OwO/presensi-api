@@ -57,13 +57,16 @@ $app->singleton(
 |
 */
 
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
+$app->middleware([
+    App\Http\Middleware\ExampleMiddleware::class
+]);
 
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+$app->routeMiddleware([
+    'auth' => App\Http\Middleware\Authenticate::class,
+    'admin' => App\Http\Middleware\AdminMiddleware::class,
+    'teacher' => App\Http\Middleware\TeacherMiddleware::class,
+    'student' => App\Http\Middleware\StudentMiddleware::class
+]);
 
 /*
 |--------------------------------------------------------------------------

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 use Laravel\Lumen\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Http\JsonResponse;
 
 class Handler extends ExceptionHandler
 {
@@ -45,6 +47,25 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        return parent::render($request, $exception);
+        $parentRender = parent::render($request, $exception);
+
+        if ($exception instanceof NotFoundHttpException) {
+            return new JsonResponse([
+                'error' => [
+                    'message' => 'API Endpoint tidak ditemukan',
+                    'code' => $exception->getStatusCode()
+                ]
+            ], $parentRender->status());
+        }
+
+        if ($exception instanceof ModelNotFoundException) {
+            return new JsonResponse([
+                'error' => [
+                    'message' => 'Data tidak ditemukan'
+                ]
+            ], $parentRender->status());
+        }
+
+        return $parentRender;
     }
 }

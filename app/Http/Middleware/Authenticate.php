@@ -3,42 +3,34 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Contracts\Auth\Factory as Auth;
+use App\User;
+use App\Helpers\JwtHelper;
 
 class Authenticate
 {
-    /**
-     * The authentication guard factory instance.
-     *
-     * @var \Illuminate\Contracts\Auth\Factory
-     */
-    protected $auth;
-
-    /**
-     * Create a new middleware instance.
-     *
-     * @param  \Illuminate\Contracts\Auth\Factory  $auth
-     * @return void
-     */
-    public function __construct(Auth $auth)
-    {
-        $this->auth = $auth;
-    }
-
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string|null  $guard
-     * @return mixed
-     */
     public function handle($request, Closure $next, $guard = null)
     {
-        if ($this->auth->guard($guard)->guest()) {
-            return response('Unauthorized.', 401);
+        if(!$request->header('Authorization')) {
+            // Unauthorized response if token not there
+            return response()->json([
+                'error' => [
+                    'message' => 'Tidak mememiliki akses login'
+                ]
+            ], 401);
         }
 
+        $token = explode(' ', $request->header('Authorization'));
+        $credentials = JWTHelper::getTokenData($token[1]);
+
+        if ($credentials instanceof \Illuminate\Http\JsonResponse) {
+            return $credentials;
+        }
+
+        $user = User::find($credentials->user_id);
+        // Now let's put the user and credentials in the request class
+        // so that you can grab it from there
+        $request->auth = $user;
+        $request->credentials = $credentials;
         return $next($request);
     }
 }
