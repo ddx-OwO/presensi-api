@@ -45,13 +45,13 @@ class JwtHelper
                 'error' => [
                     'message' => 'Sesi login sudah kadaluarsa. Silakan login kembali.'
                 ]
-            ], 400);
+            ], 401);
         } catch(Exception $e) {
             return response()->json([
                 'error' => [
                     'message' => $e->getMessage()
                 ]
-            ], 400);
+            ], 401);
         }
 
         return $credentials;
