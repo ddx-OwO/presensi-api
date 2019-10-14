@@ -3,17 +3,13 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Exception;
 use App\User;
-use Firebase\JWT\JWT;
-use Firebase\JWT\ExpiredException;
+use App\Helpers\JwtHelper;
 
 class Authenticate
 {
     public function handle($request, Closure $next, $guard = null)
     {
-        $token = explode(' ', $request->header('Authorization'));
-        
         if(!$request->header('Authorization')) {
             // Unauthorized response if token not there
             return response()->json([
@@ -23,24 +19,18 @@ class Authenticate
             ], 401);
         }
 
-        try {
-            $credentials = JWT::decode($token[1], env('JWT_SECRET'), ['HS256']);
-        } catch(ExpiredException $e) {
-            return response()->json([
-                'error' => [
-                    'message' => 'Sesi login sudah kadaluarsa. Silakan login kembali.'
-                ]
-            ], 400);
-        } catch(Exception $e) {
-            return response()->json([
-                'error' => [
-                    'message' => $e->getMessage()
-                ]
-            ], 400);
+        $token = explode(' ', $request->header('Authorization'));
+        $credentials = JWTHelper::getTokenData($token[1]);
+
+        if ($credentials instanceof \Illuminate\Http\JsonResponse) {
+            return $credentials;
         }
-        $user = User::find($credentials->sub);
-        // Now let's put the user in the request class so that you can grab it from there
+
+        $user = User::find($credentials->user_id);
+        // Now let's put the user and credentials in the request class
+        // so that you can grab it from there
         $request->auth = $user;
+        $request->credentials = $credentials;
         return $next($request);
     }
 }
