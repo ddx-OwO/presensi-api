@@ -6,12 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Firebase\JWT\JWT;
 use App\User;
+use App\Helpers\JwtHelper;
 
 class AuthController extends Controller
 {
     public function __contruct()
     {
-        
+
     }
 
     public function authenticate(Request $request)
@@ -25,6 +26,7 @@ class AuthController extends Controller
         ], $messages);
         $errors = $validator->errors();
 
+        // Mengembalikan respon HTTP code 422 jika username atau password kosong
         if ($errors->has('username') || $errors->has('password')) {
             return response()->json([
                 'error' => [
@@ -47,7 +49,7 @@ class AuthController extends Controller
             ];
             $exp = time() + env('JWT_EXP');
             return response()->json([
-                'token' => $this->generateToken($payload, $user->username, $exp),
+                'token' => JwtHelper::generateToken($payload, $user->username, $exp),
                 'expires_in' => $exp
             ]);
         } else {
@@ -57,19 +59,5 @@ class AuthController extends Controller
                 ]
             ], 400);
         }
-    }
-
-    protected function generateToken($payload, $subject, $expire_time) 
-    {
-        $privateClaims = [
-            'iss' => env('APP_URL'),
-            'sub' => $subject,
-            'exp' => time() + $expire_time,
-            'iat' => time()
-        ];
-        $payload = array_merge($privateClaims, $payload);
-
-        $jwt = JWT::encode($payload, env('JWT_SECRET'), 'HS256');
-        return $jwt;
     }
 }
